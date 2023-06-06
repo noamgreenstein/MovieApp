@@ -11,4 +11,6 @@ public interface IType {
   int getRating();
 
   int getYear();
+
+  String getURL();
 }

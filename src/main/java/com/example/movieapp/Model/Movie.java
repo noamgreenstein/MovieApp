@@ -37,6 +37,11 @@ public class Movie implements IType{
     return 0;
   }
 
+  @Override
+  public String getURL() {
+    return "null";
+  }
+
   public void setLength(double length){
     this.length = length;
   }

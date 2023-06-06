@@ -26,6 +26,7 @@ public class V1Model implements IModel{
   public V1Model(){
     this.movies = new ArrayList<IType>();
     this.size = 0;
+    this.watchlist = new ArrayList<IType>();
   }
 
   @Override
@@ -67,6 +68,12 @@ public class V1Model implements IModel{
   public void rerate(IType movie, int rating){
     int idx = this.movies.indexOf(movie);
     this.movies.get(idx).setRating(rating);
+  }
+
+  @Override
+  public void clear() {
+    this.movies = new ArrayList<>();
+    this.watchlist = new ArrayList<>();
   }
 
   public List<IType> getMovies() {

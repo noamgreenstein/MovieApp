@@ -43,4 +43,12 @@ public class IMDBMovie implements IType{
   public int getYear() {
     return this.year;
   }
+
+  @Override
+  public String getURL() {
+    if (this.image != null) {
+      return this.image.getUrl();
+    }
+    return "no image";
+  }
 }

@@ -27,5 +27,7 @@ public interface IModel {
 
   void rerate(IType movie, int rating);
 
+  void clear();
+
 
 }
