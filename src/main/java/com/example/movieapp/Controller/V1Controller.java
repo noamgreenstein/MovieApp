@@ -48,6 +48,7 @@ public class V1Controller implements IController {
 
   Button b4;
   Button b5;
+  Button b6;
 
   Button backButton;
 
@@ -106,6 +107,17 @@ public class V1Controller implements IController {
       }
     });
     view.setLayout(b5,500,550);
+    b6.setOnAction(arg0 ->{
+      try {
+        currModel = "";
+        if(currModel.equalsIgnoreCase("")) {
+          save();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    view.setLayout(b6,500,600);
   }
 
   public Scene movieListScene(String type) {
@@ -384,6 +396,7 @@ public class V1Controller implements IController {
     b3 = new Button("Watchlist");
     b4 = new Button("Add Movies");
     b5 = new Button("Load");
+    b6 = new Button("Save as New");
     setButton();
     Group g = new Group();
     g.getChildren().add(b);
@@ -391,6 +404,7 @@ public class V1Controller implements IController {
     g.getChildren().add(b3);
     g.getChildren().add(b4);
     g.getChildren().add(b5);
+    g.getChildren().add(b6);
     return new Scene(g, 1000, 1000);
   }
 
@@ -399,8 +413,8 @@ public class V1Controller implements IController {
     Statement s = connection.createStatement();
     if(currModel.equalsIgnoreCase("")) {
       newSaveState();
-      s.execute(String.format("CREATE TABLE %s ( title varchar(64), imgURL varchar(64), year int, rating int, seen int);", currModel));
-      s.executeUpdate(String.format("INSERT INTO SAVES (refs) VALUES ('%s')", currModel));
+    } else {
+      s.execute(String.format("DELETE FROM %s;", currModel));
     }
     for (IType t : model.getMovies()){
       s.executeUpdate(String.format("INSERT INTO %s VALUES ('%s', '%s', %d, %d, %d);",
@@ -410,7 +424,7 @@ public class V1Controller implements IController {
       s.executeUpdate(String.format("INSERT INTO %s VALUES ('%s', '%s', %d, %d, %d);",
               currModel, t.getTitle(), t.getURL(), t.getYear(), 0, 0));
     }
-    removeDuplicates();
+
   }
 
   @Override
@@ -438,29 +452,39 @@ public class V1Controller implements IController {
   }
 
   private void newSaveState() throws SQLException {
-    String save = "";
     Popup popup = new Popup();
-    GridPane rootNode = new GridPane();
-    rootNode.setPadding(new Insets(15));
-    rootNode.setHgap(5);
-    rootNode.setVgap(5);
-    rootNode.setAlignment(Pos.CENTER);
-    rootNode.add(new Label("Save As:"), 0, 0);
+    Group root = new Group();
+    root.getChildren().add(new Label("Save As:"));
     TextField name = new TextField();
-    rootNode.add(name, 1, 0);
-    rootNode.getChildren().add(backButton);
+    root.getChildren().add(name);
+    root.getChildren().add(backButton);
+    backButton.setLayoutX(0);
+    backButton.setLayoutY(100);
     backButton.setOnAction(arg0 -> {
-      s.setScene(initScene());
+      popup.hide();
     });
-    popup.getContent().add(rootNode);
+    Button saver = new Button("Save");
+    saver.setLayoutX(50);
+    saver.setLayoutY(50);
+    saver.setOnAction(arg0 -> {
+      Statement st;
+      try {
+        st = connection.createStatement();
+        String save = "";
+        save = name.getText();
+        currModel = save;
+        System.out.println(currModel);
+        st.execute(String.format("CREATE TABLE %s (title varchar(64), imgURL varchar(64), year int, rating int, seen int);", currModel));
+        st.executeUpdate(String.format("INSERT INTO SAVES (refs) VALUES ('%s')", currModel));
+        name.clear();
+        popup.hide();
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    popup.getContent().add(saver);
+    popup.getContent().add(root);
     popup.show(s);
-    save = name.getText();
-    currModel = save;
-    popup.hide();
-  }
-
-  private void removeDuplicates(){
-    System.out.println("hello");
   }
 
   private void loadScene() throws SQLException {
