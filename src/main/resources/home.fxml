@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<?import javafx.scene.Scene?>
+<Scene xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.movieapp.Controller.gui.HomeController">
+   <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="449.0" prefWidth="621.0" style="-fx-background-color: GRAY; -fx-border-color: GOLD; -fx-border-width: 10;">
+      <opaqueInsets>
+         <Insets />
+      </opaqueInsets>
+      <children>
+         <Button fx:id="mListButton" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#showMList" text="Movies" />
+         <Button fx:id="recButton" layoutX="212.0" layoutY="14.0" mnemonicParsing="false" onAction="#generateRec" prefHeight="26.0" prefWidth="175.0" text="Generate Recommendation" />
+         <Button fx:id="wListButton" layoutX="539.0" layoutY="14.0" mnemonicParsing="false" onAction="#showWlist" text="Watchlist" />
+         <TextField fx:id="searchBox" layoutX="220.0" layoutY="144.0" />
+         <Button layoutX="259.0" layoutY="183.0" mnemonicParsing="false" onAction="#search" text="Search" textFill="#5f8351">
+            <font>
+               <Font name="Apple Braille" size="18.0" />
+            </font>
+         </Button>
+         <Text layoutX="24.0" layoutY="416.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Movie App By Noam Greenstein" />
+         <Button fx:id="saveButton" layoutX="529.0" layoutY="274.0" mnemonicParsing="false" onAction="#save" text="Save" />
+         <Button fx:id="loadButton" layoutX="529.0" layoutY="315.0" mnemonicParsing="false" onAction="#load" text="Load" />
+         <Button fx:id="sanButton" layoutX="511.0" layoutY="356.0" mnemonicParsing="false" onAction="#saveAsNew" text="Save as new" />
+      </children>
+   </AnchorPane>
+</Scene>

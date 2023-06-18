@@ -13,9 +13,12 @@ module com.example.movieapp {
   requires java.security.jgss;
   requires java.net.http;
   requires java.sql;
+  requires org.json;
 
   opens com.example.movieapp to javafx.fxml;
   exports com.example.movieapp;
   exports com.example.movieapp.Controller;
   opens com.example.movieapp.Controller to javafx.fxml;
+  exports com.example.movieapp.Controller.gui;
+  opens com.example.movieapp.Controller.gui to javafx.fxml;
 }

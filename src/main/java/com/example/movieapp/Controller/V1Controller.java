@@ -5,7 +5,6 @@ import com.example.movieapp.Model.TYPES;
 import com.example.movieapp.Model.V1Model;
 import com.example.movieapp.View.V1View;
 import com.example.movieapp.Model.IModel;
-import com.example.movieapp.Model.Movie;
 import com.example.movieapp.View.IView;
 
 import java.io.IOException;
@@ -15,7 +14,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -49,6 +50,7 @@ public class V1Controller implements IController {
   Button b4;
   Button b5;
   Button b6;
+  Button b7;
 
   Button backButton;
 
@@ -56,6 +58,8 @@ public class V1Controller implements IController {
   String currModel;
 
   Stage s;
+  
+  String[] gptRecs;
 
   public V1Controller(V1View view, V1Model model) throws SQLException {
     this.view = view;
@@ -83,7 +87,7 @@ public class V1Controller implements IController {
     });
     b2.setOnAction(arg0 -> {
       try {
-        save();
+        realSave();
       } catch (SQLException e) {
         throw new RuntimeException(e);
       }
@@ -109,15 +113,20 @@ public class V1Controller implements IController {
     view.setLayout(b5,500,550);
     b6.setOnAction(arg0 ->{
       try {
-        currModel = "";
-        if(currModel.equalsIgnoreCase("")) {
-          save();
-        }
+        newSaveState();
       } catch (SQLException e) {
         throw new RuntimeException(e);
       }
     });
     view.setLayout(b6,500,600);
+    b7.setOnAction(arg0 -> {
+      try {
+        s.setScene(chatGPT());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+    view.setLayout(b7, 50, 200);
   }
 
   public Scene movieListScene(String type) {
@@ -321,7 +330,7 @@ public class V1Controller implements IController {
         title.deleteText(0, title.getText().length());
         List<IMDBMovie> movies = IMDB.request(movie);
         if(movies != null){
-          displaySearchResults(movies);
+          displaySearchResults(movies, askForMovies());
         }
       } catch (NumberFormatException nfe) {
         System.out.println("improper input");
@@ -332,13 +341,19 @@ public class V1Controller implements IController {
         throw new RuntimeException(ex);
       }
     });
+    backButton.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+        public void handle(ActionEvent actionEvent) {
+      s.setScene(initScene());
+      }
+    });
     rootNode.add(backButton, 1, 3);
     GridPane.setHalignment(backButton, HPos.LEFT);
     setButton();
     return myScene;
   }
 
-  public void displaySearchResults(List<IMDBMovie> movies){
+  public void displaySearchResults(List<IMDBMovie> movies, Scene scene){
     Group root = new Group();
     ListView<ImageView> list = new ListView<>();
     ObservableList<ImageView> items = FXCollections.observableArrayList();
@@ -349,7 +364,7 @@ public class V1Controller implements IController {
     view.setLayout(backButton,0,750);
     root.getChildren().add(backButton);
     backButton.setOnAction(arg0 -> {
-      s.setScene(askForMovies());
+      s.setScene(scene);
     });
     root.getChildren().add(list);
     for (IMDBMovie m : movies) {
@@ -363,7 +378,7 @@ public class V1Controller implements IController {
     Button addW = new Button("Add to Watchlist");
     addW.setOnAction(arg0 -> {
       model.addW(movies.get(list.getSelectionModel().getSelectedIndex()));
-      s.setScene(askForMovies());
+      //s.setScene(askForMovies());
     });
     view.setLayout(addW,0,700);
     root.getChildren().add(addW);
@@ -372,14 +387,14 @@ public class V1Controller implements IController {
     add.setOnAction(arg0 -> {
       model.add(movies.get(list.getSelectionModel().getSelectedIndex()));
       addRating((movies.get(list.getSelectionModel().getSelectedIndex())),  TYPES.Search);
-      s.setScene(askForMovies());
+      //s.setScene(askForMovies());
     });
     view.setLayout(add,0,650);
     root.getChildren().add(add);
 
 
-    Scene scene = new Scene(root, 1000, 1000);
-    s.setScene(scene);
+    Scene sc = new Scene(root, 1000, 1000);
+    s.setScene(sc);
   }
   @Override
   public void run(Stage stage) {
@@ -397,6 +412,7 @@ public class V1Controller implements IController {
     b4 = new Button("Add Movies");
     b5 = new Button("Load");
     b6 = new Button("Save as New");
+    b7 = new Button("Generate Recommendation");
     setButton();
     Group g = new Group();
     g.getChildren().add(b);
@@ -405,17 +421,23 @@ public class V1Controller implements IController {
     g.getChildren().add(b4);
     g.getChildren().add(b5);
     g.getChildren().add(b6);
+    g.getChildren().add(b7);
     return new Scene(g, 1000, 1000);
+  }
+
+  private void realSave() throws SQLException {
+    if(currModel.equalsIgnoreCase("")) {
+      newSaveState();
+    }
+    else {
+      save();
+    }
   }
 
   @Override
   public void save() throws SQLException {
     Statement s = connection.createStatement();
-    if(currModel.equalsIgnoreCase("")) {
-      newSaveState();
-    } else {
-      s.execute(String.format("DELETE FROM %s;", currModel));
-    }
+    s.execute(String.format("DELETE FROM %s;", currModel));
     for (IType t : model.getMovies()){
       s.executeUpdate(String.format("INSERT INTO %s VALUES ('%s', '%s', %d, %d, %d);",
               currModel, t.getTitle(), t.getURL(), t.getYear(), t.getRating(), 1));
@@ -478,6 +500,7 @@ public class V1Controller implements IController {
         st.executeUpdate(String.format("INSERT INTO SAVES (refs) VALUES ('%s')", currModel));
         name.clear();
         popup.hide();
+        save();
       } catch (SQLException e) {
         throw new RuntimeException(e);
       }
@@ -485,6 +508,7 @@ public class V1Controller implements IController {
     popup.getContent().add(saver);
     popup.getContent().add(root);
     popup.show(s);
+
   }
 
   private void loadScene() throws SQLException {
@@ -529,10 +553,6 @@ public class V1Controller implements IController {
 
   }
 
-  private void generateSuggestionGPT(){
-    String prompt = "";
-  }
-
   public Scene infoScene(IType m){
      Group g = new Group();
      Text t = new Text(String.format("Year: %d", m.getYear()));
@@ -540,5 +560,66 @@ public class V1Controller implements IController {
      g.getChildren().add(t);
      g.getChildren().add(backButton);
      return new Scene(g, 1000, 1000);
+  }
+
+  public Scene chatGPT() throws Exception {
+    if(Objects.isNull(gptRecs)){
+      gptRecs = getGptRecs();
+    }
+    s.setTitle("Recommendations");
+    Group g = new Group();
+    ListView<String> list = new ListView<>();
+    ObservableList<String> items = FXCollections.observableArrayList();
+    list.setItems(items);
+    list.setPrefWidth(500);
+    list.setPrefHeight(500);
+    view.setLayout(list,0,0);
+    backButton.setLayoutY(0);
+    backButton.setLayoutX(750);
+    g.getChildren().add(backButton);
+    backButton.setOnAction(arg0 -> {
+      s.setScene(initScene());
+    });
+    g.getChildren().add(list);
+    items.addAll(Arrays.asList(gptRecs));
+    Button select = new Button("Select");
+    select.setLayoutY(0);
+    select.setLayoutX(550);
+    g.getChildren().add(select);
+    select.setOnAction(actionEvent -> {
+      String title = list.getSelectionModel().getSelectedItem();
+      g.getChildren().remove(backButton);
+      try {
+        displaySearchResults(IMDB.request(title.split(" ")), chatGPT());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+    });
+    return new Scene(g, 1000, 1000);
+  }
+  
+  private String[] getGptRecs() throws Exception {
+    StringBuilder prompt = new StringBuilder();
+    String provide = "Please provide me a movie recommendation list with movies found on IMDB. ";
+    String format = "Please format the list by providing only the movie title and separate each title with a comma. ";
+    String generate = "Please make your recommendation based off these following movies: ";
+    prompt.append(provide);
+    prompt.append(format);
+    prompt.append(generate);
+    for (IType m : model.getMovies()){
+      prompt.append(String.format("%s, ", m.getTitle()));
+    }
+    String avoid = "Please do not include the following titles or the titles provided above: ";
+    prompt.append(avoid);
+    for (IType m : model.getWatchlist()){
+      prompt.append(String.format("%s, ", m.getTitle()));
+    }
+    String res = "Please ONLY respond with the list of movies, no additional text";
+    prompt.append(res);
+    String response = ChatGPT.sendPrompt(prompt.toString()).substring(1);
+    String[] recs = response.trim().split(",");
+
+    return recs;
   }
 }

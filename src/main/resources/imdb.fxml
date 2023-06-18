@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: gray;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="IMDBController">
+   <children>
+      <ListView fx:id="list" prefHeight="400.0" prefWidth="200.0" />
+      <Button fx:id="infoButton" layoutX="208.0" layoutY="14.0" mnemonicParsing="false" onAction="#info" text="Info" />
+      <Button fx:id="wButton" layoutX="208.0" layoutY="59.0" mnemonicParsing="false" onAction="#watch" text="Watch" />
+      <Button fx:id="wlistButton" layoutX="208.0" layoutY="102.0" mnemonicParsing="false" onAction="#addW" text="Add to Watchlist" />
+      <Button fx:id="backButton" layoutX="531.0" layoutY="15.0" mnemonicParsing="false" onAction="#back" text="Back" textFill="#d31212" />
+      <Text layoutY="-13.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" wrappingWidth="24.21630859375" />
+      <Text fill="#faff63" layoutX="208.0" layoutY="383.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Powered by IMDB" />
+   </children>
+</AnchorPane>
