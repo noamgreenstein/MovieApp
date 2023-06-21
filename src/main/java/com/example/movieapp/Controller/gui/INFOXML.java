@@ -1,67 +1,62 @@
 package com.example.movieapp.Controller.gui;
-import com.example.movieapp.Model.IMDBMovie;
+
 import com.example.movieapp.Model.IType;
+import com.example.movieapp.Model.V1Model;
+
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import javafx.collections.FXCollections;
+
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Popup;
 
-public class IMDBController extends BACKXML{
+public abstract class INFOXML extends BACKXML{
+  @FXML
+  protected ListView<String> list;
 
-  private List<IMDBMovie> movies;
-  private HashMap<ImageView, IMDBMovie> refs;
+  protected HashMap<String,IType> refs;
+
+  protected ObservableList<String> items;
 
   @FXML
-  private ListView<ImageView> list;
-
-  @FXML
-  private Button wButton;
-
-  @FXML
-  private Button wlistButton;
-
-  @FXML
-  void addW(ActionEvent event) {
-    ImageView v = list.getSelectionModel().getSelectedItem();
-    IType m = refs.get(v);
-    this.model.addW(m);
-  }
-
-  @Override
-  public void init() throws SQLException {
-    refs = new HashMap<>();
-    ObservableList<ImageView> items = FXCollections.observableArrayList();
-    for (IMDBMovie m : movies) {
-      if(!Objects.isNull(m.getImage())){
-        ImageView v = new ImageView(m.getImage());
-        refs.put(v,m);
-        v.setFitWidth(100);
-        v.setFitHeight(100);
-        items.add(v);
-      }
-    }
-    this.list.setItems(items);
+  void remove(ActionEvent event) throws SQLException {
+    IType m = refs.get(list.getSelectionModel().getSelectedItem());
+    items.remove(list.getSelectionModel().getSelectedItem());
+    model.remove(m);
+    this.init();
   }
 
   @FXML
-  void watch(ActionEvent event) {
-    ImageView v = list.getSelectionModel().getSelectedItem();
-    IType m = refs.get(v);
-    this.model.add(m);
+  void info(ActionEvent event) throws IOException {
+    setLoader();
+    loader.setLocation(getClass().getClassLoader().getResource("info.fxml"));
+    Scene scene = loader.load();
+    InfoController info = loader.getController();
+    info.setModel(new V1Model());
+    info.setStage(stage);
+    info.setModel(model);
+    info.setWatch(!list.getSelectionModel().getSelectedItem().contains("*"));
+    IType movie = refs.get(list.getSelectionModel().getSelectedItem());
+    info.setMovie(movie);
+    info.init();
+    stage.setScene(scene);
+
+  }
+
+  @FXML
+  void rerate(ActionEvent event) {
+    IType m = refs.get(list.getSelectionModel().getSelectedItem());
     Popup popup = new Popup();
     GridPane rootNode = new GridPane();
     rootNode.setPadding(new Insets(15));
@@ -92,9 +87,4 @@ public class IMDBController extends BACKXML{
     });
   }
 
-  public void setMovies(List<IMDBMovie> movies){
-    this.movies = movies;
-  }
-
 }
-

@@ -1,30 +1,50 @@
 package com.example.movieapp.Controller.gui;
 
 import com.example.movieapp.Controller.ChatGPT;
-import com.example.movieapp.Model.IModel;
+import com.example.movieapp.Controller.IMDB;
 import com.example.movieapp.Model.IType;
-import com.example.movieapp.Model.V1Model;
 
-import java.util.Arrays;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Objects;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 
-public class HomeController {
+public class HomeController extends AXML{
 
+  private Connection connection;
 
-  private IModel model;
-  private Stage stage;
+  {
+    try {
+      connection = DriverManager.getConnection("jdbc:sqlite:/Users/noamgreenstein/Documents/Projects/MovieApp/src/db");
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
+  Statement statement;
+
+  {
+    try {
+      statement = connection.createStatement();
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  private String saveState;
   private String[] gptRecs;
   @FXML
   private Button loadButton;
@@ -48,104 +68,128 @@ public class HomeController {
   private Button wListButton;
 
   @FXML
-  void generateRec(ActionEvent event) {
-//    if(Objects.isNull(gptRecs)){
-//      gptRecs = getGptRecs();
-//    }
-//    s.setTitl`                                                                                        e("Recommendations");
-//    Group g = new Group();
-//    ListView<String> list = new ListView<>();
-//    ObservableList<String> items = FXCollections.observableArrayList();
-//    list.setItems(items);
-//    list.setPrefWidth(500);
-//    list.setPrefHeight(500);
-//    view.setLayout(list,0,0);
-//    backButton.setLayoutY(0);
-//    backButton.setLayoutX(750);
-//    g.getChildren().add(backButton);
-//    backButton.setOnAction(arg0 -> {
-//      s.setScene(initScene());
-//    });
-//    g.getChildren().add(list);
-//    items.addAll(Arrays.asList(gptRecs));
-//    Button select = new Button("Select");
-//    select.setLayoutY(0);
-//    select.setLayoutX(550);
-//    g.getChildren().add(select);
-//    select.setOnAction(actionEvent -> {
-//      String title = list.getSelectionModel().getSelectedItem();
-//      g.getChildren().remove(backButton);
-//      try {
-//        displaySearchResults(IMDB.request(title.split(" ")), chatGPT());
-//      } catch (Exception e) {
-//        throw new RuntimeException(e);
-//      }
-//
-//    });
-//    return new Scene(g, 1000, 1000);
+  void generateRec(ActionEvent event) throws Exception {
+    setLoader();
+    loader.setLocation(getClass().getClassLoader().getResource("gpt.fxml"));
+    Scene scene = loader.load();
+    GPTController gpt = loader.getController();
+    gpt.setModel(model);
+    gpt.setStage(stage);
+    if(Objects.isNull(gptRecs)){
+      gptRecs = this.model.getGptRecs();
+      gpt.setTitles(gptRecs);
+    }
+    else {
+      gpt.setTitles(gptRecs);
+    }
+    gpt.init();
+    stage.setScene(scene);
   }
 
   @FXML
-  void load(ActionEvent event) {
-    //load scene -> load
+  void load(ActionEvent event) throws IOException, SQLException {
+    setLoader();
+    loader.setLocation(getClass().getClassLoader().getResource("load.fxml"));
+    Scene scene = loader.load();
+    LoadController lc = loader.getController();
+    lc.init();
+    lc.setModel(model);
+    lc.setStage(stage);
+    saveState = lc.getSaveState();
+    stage.setScene(scene);
   }
 
   @FXML
-  void save(ActionEvent event) {
-    // real save?
+  void save(ActionEvent event) throws SQLException {
+    if(Objects.isNull(saveState)) {
+      saveAsNew(new ActionEvent());
+    }
+    else {
+      saver();
+    }
+  }
+
+  public void saver() throws SQLException {
+    statement.execute(String.format("DELETE FROM %s;", saveState));
+    for (IType t : model.getMovies()){
+      statement.executeUpdate(String.format("INSERT INTO %s VALUES ('%s', '%s', %d, %d, %d);",
+              saveState, t.getTitle(), t.getURL(), t.getYear(), t.getRating(), 1));
+    }
+    for (IType t : model.getWatchlist()){
+      statement.executeUpdate(String.format("INSERT INTO %s VALUES ('%s', '%s', %d, %d, %d);",
+              saveState, t.getTitle(), t.getURL(), t.getYear(), 0, 0));
+    }
   }
 
   @FXML
   void saveAsNew(ActionEvent event) {
-    // real save?
+    Popup popup = new Popup();
+    Group root = new Group();
+    root.getChildren().add(new Label("Save As:"));
+    TextField name = new TextField();
+    root.getChildren().add(name);
+    Button saver = new Button("Save");
+    saver.setLayoutX(50);
+    saver.setLayoutY(50);
+    saver.setOnAction(arg0 -> {
+      Statement st;
+      try {
+        st = connection.createStatement();
+        String save;
+        save = name.getText();
+        saveState = save;
+        st.execute(String.format("CREATE TABLE %s (title varchar(64), imgURL varchar(64), year int, rating int, seen int);", save));
+        st.executeUpdate(String.format("INSERT INTO SAVES (refs) VALUES ('%s')", save));
+        name.clear();
+        popup.hide();
+        saver();
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    popup.getContent().add(saver);
+    popup.getContent().add(root);
+    popup.show(stage);
   }
 
   @FXML
-  void search(ActionEvent event) {
-
+  void search(ActionEvent event) throws IOException, SQLException, InterruptedException {
+    setLoader();
+    loader.setLocation(getClass().getClassLoader().getResource("imdb.fxml"));
+    Scene scene = loader.load();
+    IMDBController imdb = loader.getController();
+    imdb.setModel(model);
+    imdb.setStage(stage);
+    String[] request = searchBox.getText().split(" ");
+    imdb.setMovies(IMDB.request(request));
+    imdb.init();
+    searchBox.clear();
+    stage.setScene(scene);
   }
 
   @FXML
-  void showMList(ActionEvent event) {
-
+  void showMList(ActionEvent event) throws IOException, SQLException {
+    setLoader();
+    loader.setLocation(getClass().getClassLoader().getResource("movielist.fxml"));
+    Scene scene = loader.load();
+    MovieListController ml = loader.getController();
+    ml.setModel(model);
+    ml.setStage(stage);
+    ml.init();
+    stage.setScene(scene);
   }
 
   @FXML
-  void showWlist(ActionEvent event) {
-
+  void showWlist(ActionEvent event) throws IOException, SQLException {
+    setLoader();
+    loader.setLocation(getClass().getClassLoader().getResource("watchlist.fxml"));
+    Scene scene = loader.load();
+    WatchListController wl = loader.getController();
+    wl.setModel(model);
+    wl.setStage(stage);
+    wl.init();
+    stage.setScene(scene);
   }
 
-  void setModel(V1Model model){
-    this.model = model;
-  }
-
-  void setStage(Stage stage){
-    this.stage = stage;
-  }
-
-  //CHANGE PROMPT
-  private String[] getGptRecs() throws Exception {
-    StringBuilder prompt = new StringBuilder();
-    String provide = "Please provide me a movie recommendation list with movies found on IMDB. ";
-    String format = "Please format the list by providing only the movie title and separate each title with a comma. ";
-    String generate = "Please make your recommendation based off these following movies: ";
-    prompt.append(provide);
-    prompt.append(format);
-    prompt.append(generate);
-    for (IType m : model.getMovies()){
-      prompt.append(String.format("%s, ", m.getTitle()));
-    }
-    String avoid = "Please do not include the following titles or the titles provided above: ";
-    prompt.append(avoid);
-    for (IType m : model.getWatchlist()){
-      prompt.append(String.format("%s, ", m.getTitle()));
-    }
-    String res = "Please ONLY respond with the list of movies, no additional text";
-    prompt.append(res);
-    String response = ChatGPT.sendPrompt(prompt.toString()).substring(1);
-    String[] recs = response.trim().split(",");
-
-    return recs;
-  }
 
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Scene?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Text?>
+
+<Scene xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.movieapp.Controller.gui.InfoController">
+   <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: gray;">
+      <children>
+         <Button fx:id="backButton" layoutX="24.0" layoutY="14.0" mnemonicParsing="false" onAction="#back" text="Back" textFill="#d31212" />
+         <Text layoutY="-13.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" wrappingWidth="24.21630859375" />
+         <ImageView fx:id="view" fitHeight="233.0" fitWidth="230.0" layoutX="175.0" layoutY="27.0" pickOnBounds="true" preserveRatio="true" />
+         <Text fx:id="title" layoutX="175.0" layoutY="285.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Title: " />
+         <Text fx:id="year" layoutX="175.0" layoutY="302.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Year: " />
+         <Text fx:id="rating" layoutX="175.0" layoutY="319.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Rating: " />
+      </children>
+   </AnchorPane>
+</Scene>

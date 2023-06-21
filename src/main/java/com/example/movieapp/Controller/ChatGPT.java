@@ -1,10 +1,14 @@
 package com.example.movieapp.Controller;
 
+import com.example.movieapp.PRIVATE;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import org.json.JSONObject;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class ChatGPT {
   public static String sendPrompt(String text) throws Exception {
@@ -13,7 +17,7 @@ public class ChatGPT {
 
     con.setRequestMethod("POST");
     con.setRequestProperty("Content-Type", "application/json");
-    con.setRequestProperty("Authorization", "Bearer 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");
+    con.setRequestProperty("Authorization", "Bearer " + PRIVATE.APIKEY);
 
     JSONObject data = new JSONObject();
     data.put("model", "text-davinci-003");

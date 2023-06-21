@@ -1,5 +1,7 @@
 package com.example.movieapp.Model;
 
+import com.example.movieapp.Controller.ChatGPT;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,12 +59,16 @@ public class V1Model implements IModel{
   @Override
   public void watch(IType m) {
     this.movies.add(m);
-    remove(m);
   }
 
   @Override
   public void remove(IType m) {
-    this.watchlist.remove(m);
+    if(this.movies.contains(m) && !this.watchlist.contains(m)){
+      this.movies.remove(m);
+    }
+    else {
+      this.watchlist.remove(m);
+    }
   }
 
   public void rerate(IType movie, int rating){
@@ -82,5 +88,29 @@ public class V1Model implements IModel{
 
   public List<IType> getWatchlist() {
     return this.watchlist;
+  }
+
+  public String[] getGptRecs() throws Exception {
+    StringBuilder prompt = new StringBuilder();
+    String provide = "Please provide me a movie recommendation list with movies found on IMDB. ";
+    String format = "Please format the list by providing only the movie title and separate each title with a comma. ";
+    String generate = "Please make your recommendation based off these following movies and their rating where the user rated the movie on a scale from 1 to 10: ";
+    prompt.append(provide);
+    prompt.append(format);
+    prompt.append(generate);
+    for (IType m : this.getMovies()){
+      prompt.append(String.format("%s - %d, ", m.getTitle(), m.getRating()));
+    }
+    String avoid = "Please do not include the following titles or the titles provided above: ";
+    prompt.append(avoid);
+    for (IType m : this.getWatchlist()){
+      prompt.append(String.format("%s, ", m.getTitle()));
+    }
+    String res = "Please ONLY respond with the list of movies, no additional text";
+    prompt.append(res);
+    String response = ChatGPT.sendPrompt(prompt.toString()).substring(1);
+    String[] recs = response.trim().split(",");
+
+    return recs;
   }
 }

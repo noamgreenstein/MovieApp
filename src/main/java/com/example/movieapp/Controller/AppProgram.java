@@ -1,4 +1,5 @@
 package com.example.movieapp.Controller;
+import com.example.movieapp.Controller.gui.HomeController;
 import com.example.movieapp.Model.V1Model;
 import com.example.movieapp.View.V1View;
 
@@ -17,9 +18,9 @@ public class AppProgram extends Application{
     FXMLLoader l = new FXMLLoader();
     l.setLocation(getClass().getClassLoader().getResource("home.fxml"));
     stage.setScene(l.load());
-    V2Controller v = l.getController();
-    v.setModel(new V1Model());
-    v.setStage(stage);
+    HomeController home = l.getController();
+    home.setModel(new V1Model());
+    home.setStage(stage);
     stage.show();
   }
 
